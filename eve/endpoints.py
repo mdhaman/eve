@@ -16,8 +16,8 @@ from eve.methods import get, getitem, post, patch, delete, deleteitem, put
 from eve.methods.common import ratelimit
 from eve.render import send_response
 from eve.auth import requires_auth
-from eve.utils import config, request_method, debug_error_message
-from flask import abort, request
+from eve.utils import config, request_method, debug_error_message, api_prefix
+from flask import abort, request, current_app as app
 
 
 def collections_endpoint(**lookup):
@@ -123,9 +123,20 @@ def home_endpoint():
         links = []
         for resource in config.DOMAIN.keys():
             if not resource.endswith(config.VERSIONS):
-                links.append({'href': '/%s' % config.URLS[resource],
-                              'title': '%s' %
-                              config.DOMAIN[resource]['resource_title']})
+                if not bool(config.DOMAIN[resource].get('internal_resource', False)):
+                    links.append({'href': '/%s' % config.URLS[resource],
+                                  'title': '%s' %
+                                  config.DOMAIN[resource]['resource_title']})
+
+        for bp in app.blueprints:
+            blueprint_name = str(bp) + '.'
+            for rule in app.url_map.iter_rules():
+                if rule.endpoint.startswith(blueprint_name):
+                    title = rule.endpoint.replace(blueprint_name, '', 1)
+                    href = rule.rule.replace(api_prefix(), '', 1)
+                    links.append({'href': '%s' % href,
+                                  'title': title})
+
         response[config.LINKS] = {'child': links}
         return send_response(None, (response,))
     else:
