@@ -164,6 +164,19 @@ def _prepare_response(resource, dct, last_modified=None, etag=None,
         resp.headers.add('Last-Modified', date_to_str(last_modified))
 
     # CORS
+    add_cors_headers(resp)
+
+    # Rate-Limiting
+    limit = get_rate_limit()
+    if limit and limit.send_x_headers:
+        resp.headers.add('X-RateLimit-Remaining', str(limit.remaining))
+        resp.headers.add('X-RateLimit-Limit', str(limit.limit))
+        resp.headers.add('X-RateLimit-Reset', str(limit.reset))
+
+    return resp
+
+
+def add_cors_headers(resp):
     origin = request.headers.get('Origin')
     if origin and config.X_DOMAINS:
         if isinstance(config.X_DOMAINS, str):
@@ -187,15 +200,6 @@ def _prepare_response(resource, dct, last_modified=None, etag=None,
         resp.headers.add('Access-Control-Allow-Headers', ', '.join(headers))
         resp.headers.add('Access-Control-Allow-Methods', methods)
         resp.headers.add('Access-Control-Allow-Max-Age', config.X_MAX_AGE)
-
-    # Rate-Limiting
-    limit = get_rate_limit()
-    if limit and limit.send_x_headers:
-        resp.headers.add('X-RateLimit-Remaining', str(limit.remaining))
-        resp.headers.add('X-RateLimit-Limit', str(limit.limit))
-        resp.headers.add('X-RateLimit-Reset', str(limit.reset))
-
-    return resp
 
 
 def _best_mime():
