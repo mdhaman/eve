@@ -339,9 +339,10 @@ def serialize(document, resource=None, schema=None, fields=None):
                                 app.data.serializers[field_type](
                                     document[field][i])
                 elif field_type in app.data.serializers:
-                    # a simple field
-                    document[field] = \
-                        app.data.serializers[field_type](document[field])
+                    if not (field_type == "objectid" and field_schema.get('nullable') and document[field] is None):
+                        # a simple field
+                        document[field] = \
+                            app.data.serializers[field_type](document[field])
     return document
 
 
