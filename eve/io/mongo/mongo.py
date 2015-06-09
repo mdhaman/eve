@@ -512,7 +512,7 @@ class Mongo(DataLayer):
         lookup = self._mongotize(lookup, resource)
         datasource, filter_, _, _ = self._datasource_ex(resource, lookup)
         try:
-            self.pymongo(resource).db[datasource] \
+            return self.pymongo(resource).db[datasource] \
                                   .remove(filter_, **self._wc(resource))
         except pymongo.errors.OperationFailure as e:
             # see comment in :func:`insert()`.
